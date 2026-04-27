@@ -29,6 +29,8 @@ BP_ORDER = 4       # バターワース次数
 QWERTY_KEYS = list("qwertyuiopasdfghjklzxcvbnm")
 
 ALPHABET_DIR = Path(__file__).parent / "alphabet"
+FIGURES_DIR  = Path(__file__).parent / "figures"
+FIGURES_DIR.mkdir(exist_ok=True)
 DEVICE_ID = "000780897FDB"   # 対象デバイスID
 
 
@@ -175,7 +177,7 @@ def plot_emg_vs_frequency(features: dict, key_freq: dict[str, float]):
     ax2.legend()
 
     plt.tight_layout()
-    out_path = Path(__file__).parent / "emg_vs_frequency.png"
+    out_path = FIGURES_DIR / "emg_vs_frequency.png"
     plt.savefig(out_path, dpi=120, bbox_inches="tight")
     print(f"保存: {out_path}")
     plt.show()
@@ -224,7 +226,7 @@ def _plot_correlation(keys, freq, integral, key_freq, exclude: set | None):
     plt.tight_layout()
 
     suffix = "_excl_wq" if exclude else "_all"
-    out_path = Path(__file__).parent / f"emg_correlation{suffix}.png"
+    out_path = FIGURES_DIR / f"emg_correlation{suffix}.png"
     plt.savefig(out_path, dpi=120, bbox_inches="tight")
     print(f"保存: {out_path}")
     plt.show()
@@ -303,7 +305,7 @@ def plot_keyboard_heatmap(features: dict, key_freq: dict | None = None):
 
     fig.suptitle('EMG Activity — Keyboard Heatmap', fontsize=13, y=1.01)
     plt.tight_layout()
-    out_path = Path(__file__).parent / 'keyboard_heatmap.png'
+    out_path = FIGURES_DIR / 'keyboard_heatmap.png'
     plt.savefig(out_path, dpi=150, bbox_inches='tight')
     print(f"保存: {out_path}")
     plt.show()
@@ -438,7 +440,7 @@ def plot_optimized_keyboard(features: dict, key_freq: dict[str, float]):
              fontsize=7, color='gray')
     fig.suptitle('Keyboard Layout Optimization  (minimize Σ EMG × keystroke frequency)',
                  fontsize=12, y=0.98)
-    out_path = Path(__file__).parent / 'keyboard_optimized.png'
+    out_path = FIGURES_DIR / 'keyboard_optimized.png'
     plt.savefig(out_path, dpi=150, bbox_inches='tight')
     print(f"保存: {out_path}")
     plt.show()
@@ -457,7 +459,7 @@ def plot_keyboard_heatmap_compare(features: dict, key_freq: dict[str, float]):
 
     fig.suptitle('EMG Activity vs Keystroke Frequency', fontsize=13)
     plt.tight_layout()
-    out_path = Path(__file__).parent / 'keyboard_compare.png'
+    out_path = FIGURES_DIR / 'keyboard_compare.png'
     plt.savefig(out_path, dpi=150, bbox_inches='tight')
     print(f"保存: {out_path}")
     plt.show()
@@ -496,7 +498,7 @@ def plot_ranking(features: dict):
             ax.set_title(f"{metric_name}  —  CH{ch+1}")
             ax.set_xlabel("key")
     fig1.tight_layout()
-    out1 = Path(__file__).parent / "emg_ranking.png"
+    out1 = FIGURES_DIR / "emg_ranking.png"
     fig1.savefig(out1, dpi=120, bbox_inches="tight")
     print(f"保存: {out1}")
     plt.show()
@@ -512,7 +514,7 @@ def plot_ranking(features: dict):
         ax.set_title(metric_name)
         ax.set_xlabel("key")
     fig2.tight_layout()
-    out2 = Path(__file__).parent / "emg_ranking_sum.png"
+    out2 = FIGURES_DIR / "emg_ranking_sum.png"
     fig2.savefig(out2, dpi=120, bbox_inches="tight")
     print(f"保存: {out2}")
     plt.show()
@@ -566,7 +568,7 @@ def main():
 
     fig.suptitle("Filtered EMG — QWERTY order", y=1.01)
     plt.tight_layout()
-    out_path = Path(__file__).parent / "emg_overview.png"
+    out_path = FIGURES_DIR / "emg_overview.png"
     plt.savefig(out_path, dpi=120, bbox_inches="tight")
     print(f"\n保存: {out_path}")
     plt.show()

@@ -52,7 +52,7 @@ Result: **−44.1% reduction** in total muscle load vs QWERTY.
 - Background color = EMG cost of each key position
 - Circle size = keystroke frequency of assigned letter
 
-![Optimized keyboard layout](keyboard_optimized.png)
+![Optimized keyboard layout](figures/keyboard_optimized.png)
 
 ## Usage
 
