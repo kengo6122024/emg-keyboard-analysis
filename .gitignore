@@ -1,0 +1,13 @@
+# Data files
+alphabet/
+
+# MATLAB files
+*.m
+*.m:Zone.Identifier
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Zone identifier (Windows WSL artifact)
+*:Zone.Identifier
