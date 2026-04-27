@@ -311,6 +311,98 @@ def plot_keyboard_heatmap(features: dict, key_freq: dict | None = None):
     plt.show()
 
 
+def compare_layouts(features: dict, key_freq: dict[str, float]):
+    """QWERTY / 大西配列 / 最適配列 の総筋活動コストを比較して棒グラフ表示"""
+    from scipy.optimize import linear_sum_assignment
+
+    positions = list(features['keys'])
+    emg_by_pos = dict(zip(positions, features['integral'].sum(axis=1)))
+
+    # ── 大西配列レイアウト (QWERTY位置 → 文字、None=非アルファベット) ──────────
+    # 出典: o24.works/layout/
+    # Row1(Q-P): q l u , . f w r y p
+    # Row2(A-L): e i a o - k t n s   ← hは;位置(未計測)
+    # Row3(Z-M): z x c v ; g d       ← j,bは,./位置(未計測)
+    ONISHI: dict[str, str | None] = {
+        'q':'q', 'w':'l', 'e':'u', 'r':None, 't':None,
+        'y':'f', 'u':'w', 'i':'r', 'o':'y', 'p':'p',
+        'a':'e', 's':'i', 'd':'a', 'f':'o', 'g':None,
+        'h':'k', 'j':'t', 'k':'n', 'l':'s',
+        'z':'z', 'x':'x', 'c':'c', 'v':'v', 'b':None, 'n':'g',
+    }
+
+    # 3配列のコスト計算
+    def total_cost(layout: dict[str, str | None]) -> tuple[float, float]:
+        """(covered cost, uncovered freq %) を返す"""
+        cost = 0.0
+        uncovered = 0.0
+        for pos in positions:
+            letter = layout.get(pos)
+            if letter is None:
+                continue
+            cost += emg_by_pos[pos] * key_freq.get(letter, 0.0)
+        # 未計測ポジションの文字の頻度合計（カバーできていない分）
+        covered_letters = {v for v in layout.values() if v is not None}
+        uncovered = sum(v for k, v in key_freq.items() if k not in covered_letters)
+        return cost, uncovered
+
+    qwerty_layout  = {p: p for p in positions}
+    opt_positions  = list(features['keys'])
+    emg_arr        = features['integral'].sum(axis=1)
+    freqs_arr      = np.array([key_freq.get(l, 0.0) for l in opt_positions])
+    C              = np.outer(emg_arr, freqs_arr)
+    row_ind, col_ind = linear_sum_assignment(C)
+    opt_layout     = {opt_positions[r]: opt_positions[c] for r, c in zip(row_ind, col_ind)}
+
+    layouts = {
+        'QWERTY'       : qwerty_layout,
+        'Onishi\n(o24)': ONISHI,
+        'Optimized\n(this study)': opt_layout,
+    }
+
+    results = {}
+    print("\n── 総筋活動コスト比較 (Σ EMG × 打鍵頻度) ──────────────────────────")
+    print(f"{'配列':>12}  {'コスト':>10}  {'カバー率':>10}")
+    for name, layout in layouts.items():
+        cost, uncov = total_cost(layout)
+        coverage    = 100 - uncov
+        results[name] = cost
+        print(f"{name.replace(chr(10),' '):>12}  {cost:>10,.0f}  {coverage:>9.1f}%")
+
+    # 棒グラフ
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    labels = list(results.keys())
+    values = list(results.values())
+    colors = ['#4477aa', '#ee7733', '#228833']
+    bars   = ax.bar(labels, values, color=colors, alpha=0.85, width=0.5)
+
+    # QWERTYを100%として削減率ラベル
+    base = values[0]
+    for bar, val, label in zip(bars, values, labels):
+        pct = (base - val) / base * 100
+        pct_str = f"−{pct:.1f}%" if pct > 0 else ("QWERTY" if pct == 0 else f"+{-pct:.1f}%")
+        ax.text(bar.get_x() + bar.get_width()/2, val + base*0.01,
+                pct_str, ha='center', va='bottom', fontsize=10, fontweight='bold',
+                color=bar.get_facecolor())
+
+    ax.set_ylabel('Total muscle load  Σ EMG × freq  [a.u.]')
+    ax.set_title('Keyboard layout comparison\n(muscle load for Japanese romaji input)')
+    ax.set_ylim(0, max(values) * 1.18)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x/1000:.0f}k'))
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.tick_params(labelsize=10)
+
+    fig.text(0.5, -0.04,
+             'Onishi layout: o24.works/layout/  |  * some positions unmeasured (h, d, j, b, etc.) — slight underestimate for Onishi',
+             ha='center', fontsize=7.5, color='gray')
+
+    plt.tight_layout()
+    out_path = FIGURES_DIR / 'layout_comparison.png'
+    plt.savefig(out_path, dpi=150, bbox_inches='tight')
+    print(f"保存: {out_path}")
+    plt.show()
+
+
 def optimize_layout(features: dict, key_freq: dict[str, float]) -> dict:
     """
     Hungarian algorithm で打鍵頻度×筋活動コストを最小化するキー配置を求める。
